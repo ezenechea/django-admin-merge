@@ -88,4 +88,4 @@ class MergeModelAdmin(admin.ModelAdmin):
                 "opts": model._meta,
                 "related_map": related_map,
             },
-        )        )
+        )
