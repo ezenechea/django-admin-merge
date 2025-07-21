@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+{% load get_item %}
+{% load static %}
+
+{% block title %}Merge Entries{% endblock %}
+
+
+{% block content %}
+<h1>Merge Entries</h1>
+<form method="post">{% csrf_token %}
+    <p>Select the entry to keep:</p>
+    {% for obj in objects %}
+        <label>
+            <input type="radio" name="keep" value="{{ obj.pk }}" {% if forloop.first %}checked{% endif %}>
+            {{ obj }}
+        </label>
+        {% with rels=related_map|get_item:obj.pk %}
+        <ul>
+        {% for rel, url in rels %}
+            <li><a href="{{ url }}" target="_blank">{{ rel }}</a></li>
+        {% empty %}
+            <li>No related objects</li>
+        {% endfor %}
+        </ul>
+        {% endwith %}
+        <br>
+    {% endfor %}
+    <button type="submit" class="default">Merge</button>
+</form>
+{% endblock %}
