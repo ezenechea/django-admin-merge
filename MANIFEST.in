@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+recursive-include django_admin_merge/templates *
+recursive-include django_admin_merge/templatetags *

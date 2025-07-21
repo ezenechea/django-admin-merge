@@ -7,6 +7,12 @@ setup(
     author="Ezequiel Aurtenechea",
     packages=find_packages(),
     include_package_data=True,
+    package_data={
+        "django_admin_merge": [
+            "templates/admin/*.html",
+            "templatetags/*.py",
+        ],
+    },
     install_requires=["django"],
     license="MIT",
     # Add this to make the package importable as django_admin_merge
