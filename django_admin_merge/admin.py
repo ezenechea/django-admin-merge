@@ -170,7 +170,7 @@ def auto_register_merge_action(exclude_models=None, exclude_apps=None):
             if "." in exclude_item:
                 app_label, model_name = exclude_item.split(".", 1)
                 # Find the model by app_label and model_name
-                for model, admin_class in site._registry.items():
+                for model, admin_class in list(site._registry.items()):
                     if (
                         model._meta.app_label == app_label
                         and model._meta.model_name.lower() == model_name.lower()
@@ -178,7 +178,7 @@ def auto_register_merge_action(exclude_models=None, exclude_apps=None):
                         excluded_model_classes.add(model)
             else:
                 # Just model name, search across all apps
-                for model, admin_class in site._registry.items():
+                for model, admin_class in list(site._registry.items()):
                     if model._meta.model_name.lower() == exclude_item.lower():
                         excluded_model_classes.add(model)
         else:
