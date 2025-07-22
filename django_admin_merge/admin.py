@@ -39,12 +39,14 @@ class MergeMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Add the merge action to the admin's actions
-        if not hasattr(self, "actions"):
-            self.actions = []
-        if isinstance(self.actions, tuple):
-            self.actions = list(self.actions)
-        if merge_entries_action not in self.actions:
-            self.actions.append(merge_entries_action)
+        actions = getattr(self, "actions", None)
+        if actions is None:
+            actions = []
+        elif isinstance(actions, tuple):
+            actions = list(actions)
+        if merge_entries_action not in actions:
+            actions.append(merge_entries_action)
+        self.actions = actions
 
     def get_urls(self):
         urls = super().get_urls()
