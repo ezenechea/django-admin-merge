@@ -89,7 +89,6 @@ auto_register_merge_action(
 )
 ```
 
-You can also enable it in the app config by editing `django_admin_merge/apps.py` and uncommenting one of the example lines in the `ready()` method.
 
 ## How it works
 

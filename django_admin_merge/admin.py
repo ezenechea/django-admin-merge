@@ -185,7 +185,7 @@ def auto_register_merge_action(exclude_models=None, exclude_apps=None):
             # Assume it's a model class
             excluded_model_classes.add(exclude_item)
 
-    for model, admin_class in site._registry.items():
+    for model, admin_class in list(site._registry.items()):
         # Skip if model is in excluded models
         if model in excluded_model_classes:
             continue
