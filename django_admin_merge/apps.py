@@ -16,16 +16,12 @@ class DjangoAdminMergeConfig(AppConfig):
         from .admin import auto_register_merge_action
 
         # Uncomment and customize one of the following lines:
-
         # Option 1: Add merge to ALL admins
         # auto_register_merge_action()
-
         # Option 2: Add merge to all admins except specific models
         # auto_register_merge_action(exclude_models=['auth.User', 'auth.Group'])
-
         # Option 3: Add merge to all admins except specific apps
         # auto_register_merge_action(exclude_apps=['auth', 'contenttypes', 'sessions'])
-
         # Option 4: Combine both exclusions
         # auto_register_merge_action(
         #     exclude_models=['myapp.SensitiveModel'],
