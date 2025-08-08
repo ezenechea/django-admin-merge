@@ -63,6 +63,14 @@ class MergeMixin:
         ids = request.GET.get("ids", "").split(",")
         model = self.model
         objects = model.objects.filter(pk__in=ids)
+        
+        # Debug: Check if we have objects
+        if not objects.exists():
+            self.message_user(
+                request, "No objects found with the provided IDs.", level=messages.ERROR
+            )
+            return redirect(f"/admin/{model._meta.app_label}/{model._meta.model_name}/")
+        
         related_map = {}
         for obj in objects:
             related_map[obj.pk] = []
@@ -111,15 +119,68 @@ class MergeMixin:
             model_name = model._meta.model_name
             return redirect(f"/admin/{app_label}/{model_name}/")
 
-        return render(
-            request,
-            "admin/merge_entries.html",
-            {
-                "objects": objects,
-                "opts": model._meta,
-                "related_map": related_map,
-            },
-        )
+        # Try to render the template, fallback to simple HTML if template not found
+        try:
+            return render(
+                request,
+                "admin/merge_entries.html",
+                {
+                    "objects": objects,
+                    "opts": model._meta,
+                    "related_map": related_map,
+                    "title": f"Merge {model._meta.verbose_name_plural}",
+                },
+            )
+        except Exception as e:
+            # Fallback: render a simple inline template if the package template isn't found
+            from django.http import HttpResponse
+            from django.middleware.csrf import get_token
+            
+            csrf_token = get_token(request)
+            html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Merge Entries</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                    label {{ display: block; margin: 10px 0; }}
+                    input[type="radio"] {{ margin-right: 10px; }}
+                    ul {{ margin-left: 20px; }}
+                    button {{ padding: 10px 20px; background: #007cba; color: white; border: none; cursor: pointer; }}
+                    button:hover {{ background: #005a87; }}
+                </style>
+            </head>
+            <body>
+                <h1>Merge {model._meta.verbose_name_plural}</h1>
+                <form method="post">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
+                    <p>Select the entry to keep:</p>
+            """
+            for i, obj in enumerate(objects):
+                checked = "checked" if i == 0 else ""
+                html += f'<label><input type="radio" name="keep" value="{obj.pk}" {checked}> {obj}</label>'
+                
+                # Show related objects
+                rels = related_map.get(obj.pk, [])
+                if rels:
+                    html += "<ul>"
+                    for rel, url in rels:
+                        html += f'<li><a href="{url}" target="_blank">{rel}</a></li>'
+                    html += "</ul>"
+                else:
+                    html += "<ul><li>No related objects</li></ul>"
+                html += "<br>"
+            
+            html += """
+                    <button type="submit">Merge</button>
+                    <br><br>
+                    <a href="javascript:history.back()">← Back to list</a>
+                </form>
+            </body>
+            </html>
+            """
+            return HttpResponse(html)
 
 
 class MergeModelAdmin(MergeMixin, admin.ModelAdmin):
