@@ -6,7 +6,6 @@
 
 
 {% block content %}
-<h1>Merge Entries</h1>
 <form method="post">{% csrf_token %}
     <p>Select the entry to keep:</p>
     {% for obj in objects %}
