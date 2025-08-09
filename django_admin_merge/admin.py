@@ -2,7 +2,7 @@
 from django.contrib import admin, messages
 from django.db import transaction
 from django.shortcuts import redirect, render
-from django.urls import path
+from django.urls import path, reverse
 
 
 def merge_entries_action(modeladmin, request, queryset):
@@ -18,12 +18,17 @@ def merge_entries_action(modeladmin, request, queryset):
     model = queryset.model
     selected = queryset.values_list("pk", flat=True)
 
-    # Build the merge URL for this specific model
-    app_label = model._meta.app_label
-    model_name = model._meta.model_name
-    merge_url = (
-        f'/admin/{app_label}/{model_name}/merge/?ids={",".join(map(str, selected))}'
-    )
+    # Build the merge URL for this specific model using reverse
+
+    try:
+        # Try to build the URL using the custom URL name pattern
+        base_url = reverse(
+            f"admin:{model._meta.app_label}_{model._meta.model_name}_merge"
+        )
+        merge_url = f'{base_url}?ids={",".join(map(str, selected))}'
+    except:
+        # Fallback to the relative URL pattern
+        merge_url = f'merge/?ids={",".join(map(str, selected))}'
 
     return redirect(merge_url)
 
@@ -60,17 +65,22 @@ class MergeMixin:
         return custom_urls + urls
 
     def merge_view(self, request):
+
         ids = request.GET.get("ids", "").split(",")
         model = self.model
         objects = model.objects.filter(pk__in=ids)
-        
+
         # Debug: Check if we have objects
         if not objects.exists():
             self.message_user(
                 request, "No objects found with the provided IDs.", level=messages.ERROR
             )
-            return redirect(f"/admin/{model._meta.app_label}/{model._meta.model_name}/")
-        
+            # Use reverse to get the correct admin URL
+            list_url = reverse(
+                f"admin:{model._meta.app_label}_{model._meta.model_name}_changelist"
+            )
+            return redirect(list_url)
+
         related_map = {}
         for obj in objects:
             related_map[obj.pk] = []
@@ -80,15 +90,31 @@ class MergeMixin:
                 fk_name = related.field.name
                 rel_objs = rel_model.objects.filter(**{fk_name: obj})
                 for rel_obj in rel_objs:
-                    url = f"/admin/{rel_model._meta.app_label}/{rel_model._meta.model_name}/{rel_obj.pk}/change/"
-                    related_map[obj.pk].append((str(rel_obj), url))
+                    try:
+                        # Use reverse to get the correct admin URL
+                        url = reverse(
+                            f"admin:{rel_model._meta.app_label}_{rel_model._meta.model_name}_change",
+                            args=[rel_obj.pk],
+                        )
+                        related_map[obj.pk].append((str(rel_obj), url))
+                    except:
+                        # Fallback if reverse fails
+                        related_map[obj.pk].append((str(rel_obj), "#"))
             # ManyToMany relations
             for field in model._meta.get_fields():
                 if field.many_to_many and not field.auto_created:
                     m2m_objs = getattr(obj, field.name).all()
                     for m2m_obj in m2m_objs:
-                        url = f"/admin/{m2m_obj._meta.app_label}/{m2m_obj._meta.model_name}/{m2m_obj.pk}/change/"
-                        related_map[obj.pk].append((str(m2m_obj), url))
+                        try:
+                            # Use reverse to get the correct admin URL
+                            url = reverse(
+                                f"admin:{m2m_obj._meta.app_label}_{m2m_obj._meta.model_name}_change",
+                                args=[m2m_obj.pk],
+                            )
+                            related_map[obj.pk].append((str(m2m_obj), url))
+                        except:
+                            # Fallback if reverse fails
+                            related_map[obj.pk].append((str(m2m_obj), "#"))
 
         if request.method == "POST":
             keep_id = request.POST.get("keep")
@@ -114,10 +140,11 @@ class MergeMixin:
             self.message_user(
                 request, f"Merged entries into '{keep_obj}'.", level=messages.SUCCESS
             )
-            # Redirect to model listview
-            app_label = model._meta.app_label
-            model_name = model._meta.model_name
-            return redirect(f"/admin/{app_label}/{model_name}/")
+            # Redirect to model listview using reverse
+            list_url = reverse(
+                f"admin:{model._meta.app_label}_{model._meta.model_name}_changelist"
+            )
+            return redirect(list_url)
 
         # Try to render the template, fallback to simple HTML if template not found
         try:
@@ -135,7 +162,7 @@ class MergeMixin:
             # Fallback: render a simple inline template if the package template isn't found
             from django.http import HttpResponse
             from django.middleware.csrf import get_token
-            
+
             csrf_token = get_token(request)
             html = f"""
             <!DOCTYPE html>
@@ -160,7 +187,7 @@ class MergeMixin:
             for i, obj in enumerate(objects):
                 checked = "checked" if i == 0 else ""
                 html += f'<label><input type="radio" name="keep" value="{obj.pk}" {checked}> {obj}</label>'
-                
+
                 # Show related objects
                 rels = related_map.get(obj.pk, [])
                 if rels:
@@ -171,7 +198,7 @@ class MergeMixin:
                 else:
                     html += "<ul><li>No related objects</li></ul>"
                 html += "<br>"
-            
+
             html += """
                     <button type="submit">Merge</button>
                     <br><br>

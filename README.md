@@ -21,47 +21,7 @@ INSTALLED_APPS = [
 
 There are several ways to add merge functionality to your admin:
 
-### Method 1: Using MergeModelAdmin (Recommended for new admins)
-
-```python
-from django.contrib import admin
-from django_admin_merge.admin import MergeModelAdmin
-from .models import YourModel
-
-@admin.register(YourModel)
-class YourModelAdmin(MergeModelAdmin):
-    list_display = ['name', 'email']  # your fields
-    # ... other admin configuration
-```
-
-### Method 2: Using MergeMixin (For existing admins)
-
-```python
-from django.contrib import admin
-from django_admin_merge.admin import MergeMixin
-from .models import YourModel
-
-@admin.register(YourModel)
-class YourModelAdmin(MergeMixin, admin.ModelAdmin):
-    list_display = ['name', 'email']  # your fields
-    # ... your existing admin configuration
-```
-
-### Method 3: Adding merge action to specific admins
-
-```python
-from django.contrib import admin
-from django_admin_merge.admin import merge_entries_action
-from .models import YourModel
-
-@admin.register(YourModel)
-class YourModelAdmin(admin.ModelAdmin):
-    actions = [merge_entries_action]  # Add this line
-    list_display = ['name', 'email']  # your fields
-    # ... your existing admin configuration
-```
-
-### Method 4: Auto-apply to ALL registered admins (with exclusions)
+### Method 1: Auto-apply to ALL registered admins (with exclusions)
 
 If you want to add merge functionality to ALL your model admins automatically, you can call this function with optional exclusions:
 
@@ -88,6 +48,50 @@ auto_register_merge_action(
     exclude_apps=['auth', 'sessions']
 )
 ```
+
+
+
+### Method 2: Using MergeModelAdmin (Recommended for new admins)
+
+```python
+from django.contrib import admin
+from django_admin_merge.admin import MergeModelAdmin
+from .models import YourModel
+
+@admin.register(YourModel)
+class YourModelAdmin(MergeModelAdmin):
+    list_display = ['name', 'email']  # your fields
+    # ... other admin configuration
+```
+
+### Method 3: Using MergeMixin (For existing admins)
+
+```python
+from django.contrib import admin
+from django_admin_merge.admin import MergeMixin
+from .models import YourModel
+
+@admin.register(YourModel)
+class YourModelAdmin(MergeMixin, admin.ModelAdmin):
+    list_display = ['name', 'email']  # your fields
+    # ... your existing admin configuration
+```
+
+### Method 4: Adding merge action to specific admins
+
+```python
+from django.contrib import admin
+from django_admin_merge.admin import merge_entries_action
+from .models import YourModel
+
+@admin.register(YourModel)
+class YourModelAdmin(admin.ModelAdmin):
+    actions = [merge_entries_action]  # Add this line
+    list_display = ['name', 'email']  # your fields
+    # ... your existing admin configuration
+```
+
+
 
 
 ## How it works
