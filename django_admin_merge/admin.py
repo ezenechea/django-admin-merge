@@ -86,6 +86,8 @@ class MergeMixin:
             related_map[obj.pk] = []
             # ForeignKey relations
             for related in model._meta.related_objects:
+                if related.field.many_to_many:
+                    continue
                 rel_model = related.related_model
                 fk_name = related.field.name
                 rel_objs = rel_model.objects.filter(**{fk_name: obj})
@@ -123,6 +125,8 @@ class MergeMixin:
             with transaction.atomic():
                 # Update all FK relations in other models
                 for related in model._meta.related_objects:
+                    if related.field.many_to_many:
+                        continue
                     rel_model = related.related_model
                     fk_name = related.field.name
                     rel_qs = rel_model.objects.filter(**{f"{fk_name}__in": remove_ids})
