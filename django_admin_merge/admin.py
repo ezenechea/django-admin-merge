@@ -1,6 +1,7 @@
 # django_admin_merge/admin.py
 from django.contrib import admin, messages
 from django.db import transaction
+from django.db.models import ForeignKey
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
 
@@ -125,7 +126,7 @@ class MergeMixin:
             with transaction.atomic():
                 # Update all FK relations in other models
                 for related in model._meta.related_objects:
-                    if related.field.many_to_many:
+                    if not isinstance(related.field, ForeignKey):
                         continue
                     rel_model = related.related_model
                     fk_name = related.field.name
